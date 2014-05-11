@@ -1,0 +1,926 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<title>UK Festivals</title>
+<style type="text/css">
+      html { 
+	      height: 100%;
+	  }
+      
+	  body {
+		  height: 100%; 
+		  margin: 0; 
+		  padding: 0;
+                  background-image: url('festival.jpg');
+		  background-color: #CCC;
+                  background-size: cover; 
+                  
+	  }
+       #festival-map { 
+	  	  height: 100%;
+		  width: 65%; 
+		  margin-left: auto;
+          margin-right: auto;
+		  border-right-width: 2px;
+		  border-right-color: #ffffff;
+		  border-right-style: solid;
+		  border-left-width: 2px;
+		  border-left-color: #ffffff;
+		  border-left-style: solid;
+	  }
+
+         .pop_up_box_text {
+	 	  font-family: Georgia, 'Times New Roman', Times, serif; 
+		  font-size: 16px; 
+		  line-height: 22px; 
+		  color: #ffffff; 
+		  display: inline; 
+	  }
+
+</style>
+
+
+
+<script type="text/javascript"
+      src="http://maps.googleapis.com/maps/api/js?&sensor=true">
+</script>
+
+
+<script src="infobox/infobox.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+
+var style_festival = [
+  {
+    "featureType": "landscape",
+    "stylers": [
+      { "hue": "#ffc300" },
+      { "color": "#ecc692" }
+    ]
+  },{
+    "featureType": "water",
+    "stylers": [
+      { "color": "#4f92c6" },
+      { "hue": "#006eff" },
+      { "visibility": "on" }
+    ]
+  },{
+    "featureType": "administrative",
+    "stylers": [
+      { "visibility": "off" }
+    ]
+  },{
+    "featureType": "transit",
+    "stylers": [
+      { "visibility": "off" }
+    ]
+  },{
+    "featureType": "road",
+    "stylers": [
+      { "visibility": "off" }
+    ]
+  },{
+    "featureType": "poi",
+    "stylers": [
+      { "visibility": "off" }
+    ]
+  }
+];
+
+var style_festival_zoomed = [
+  {
+    "featureType": "landscape",
+    "stylers": [
+      { "hue": "#ffc300" },
+      { "color": "#ecc692" }
+    ]
+  },{
+    "featureType": "water",
+    "stylers": [
+      { "color": "#4f92c6" },
+      { "hue": "#006eff" },
+      { "visibility": "on" }
+    ]
+  },{
+    "featureType": "administrative",
+    "stylers": [
+      { "visibility": "on" }
+    ]
+  },{
+    "featureType": "transit",
+    "stylers": [
+      { "visibility": "on" }
+    ]
+  },{
+    "featureType": "road",
+    "stylers": [
+      { "visibility": "on" }
+    ]
+  },{
+    "featureType": "poi.park",
+    "elementType": "geometry",
+    "stylers": [
+      { "visibility": "off" },
+      { "color": "#ecc692" }
+    ]
+  },{
+    "featureType": "poi",
+    "stylers": [
+      { "visibility": "on" }
+    ]
+  }
+];
+
+
+var styled_festival = new google.maps.StyledMapType(style_festival, {name: "Festival style"});
+
+var styled_festival_zoomed = new google.maps.StyledMapType(style_festival_zoomed, {name: "Festival style zoomed"});
+
+
+var festivalMapCenter = new google.maps.LatLng(54.722439, -0.252686);
+
+var festivalMapZoom = 6;
+
+var festivalMapZoomMax = 12;
+var festivalMapZoomMin = 6;
+
+var festivalMapOptions = { 
+		  center: festivalMapCenter, 
+          zoom: festivalMapZoom,
+
+mapTypeId: google.maps.MapTypeId.ROADMAP,
+		  maxZoom:festivalMapZoomMax,
+		  minZoom:festivalMapZoomMin,
+
+	          panControl: false,
+		  mapTypeControl: false,
+};
+
+ var festivalMap; 
+
+
+var controlPanelDiv = document.createElement('div');
+var festivalMapControlPanel = new createControlPanel(controlPanelDiv, festivalMap);
+
+var resetButtonDiv = document.createElement('div');
+var festivalMapResetButton = new createResetButton(resetButtonDiv, festivalMap);
+
+
+var pop_up_info = "border: 0px solid black; background-color: #ffffff; padding:15px; margin-top: 8px; border-radius:10px; -moz-border-radius: 10px; -webkit-border-radius: 10px; box-shadow: 1px 1px #888;";
+
+
+google.maps.event.addDomListener(window, 'load', loadFestivalMap);
+
+function loadFestivalMap() {
+	
+festivalMap = new google.maps.Map(document.getElementById("festival-map"), festivalMapOptions);	
+
+festivalMap.mapTypes.set('map_styles_festival', styled_festival);
+festivalMap.mapTypes.set('map_styles_festival_zoomed', styled_festival_zoomed);
+
+festivalMap.setMapTypeId('map_styles_festival');
+
+google.maps.event.addListener(festivalMap, "zoom_changed", function() {
+	var newZoom = festivalMap.getZoom();
+
+        if (newZoom > 6){
+		festivalMap.setMapTypeId('map_styles_festival_zoomed');
+			}
+
+        else {
+		festivalMap.setMapTypeId('map_styles_festival');
+	}
+
+});
+
+
+festivalMap.controls[google.maps.ControlPosition.RIGHT_TOP].push(controlPanelDiv);
+festivalMap.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(resetButtonDiv);
+
+
+
+loadMapMarkers();
+
+}
+
+
+function loadMapMarkers (){
+
+//GLASTONBURY -----------------
+
+
+var markerPositionGlastonbury = new google.maps.LatLng(51.159803, -2.585585);
+
+ var markerIconGlastonbury = {
+
+             url: 'icons/icon_glas_uk.png',
+
+             size: new google.maps.Size(225, 120),
+
+             origin: new google.maps.Point(0, 0),
+
+             anchor: new google.maps.Point(189, 116)
+};
+
+var markerShapeGlastonbury = {
+
+      coord: [12,4,216,22,212,74,157,70,184,111,125,67,6,56],
+
+      type: 'poly'
+};
+
+
+
+markerGlastonbury = new google.maps.Marker({
+
+             position: markerPositionGlastonbury,
+
+           map: festivalMap,
+      title: 'Glastonbury Festival',
+
+      icon: markerIconGlastonbury,
+
+      shape: markerShapeGlastonbury,
+
+      zIndex:107
+});
+
+var boxTextGlastonbury = document.createElement("div");
+boxTextGlastonbury.style.cssText = pop_up_info;
+boxTextGlastonbury.innerHTML = '<span class="pop_up_box_text"><img src="content/glastonbury.jpg" width="400" height="285" border="0" /></span>';
+
+var infoboxOptionsGlastonbury = {
+                 content: boxTextGlastonbury
+                ,disableAutoPan: false
+                ,maxWidth: 0
+                ,pixelOffset: new google.maps.Size(-241, 0)
+                ,zIndex: null
+                ,boxStyle: { 
+                  background: "url('infobox/pop_up_box_top_arrow.png') no-repeat"
+                  ,opacity: 1
+                  ,width: "430px"
+                 }
+                ,closeBoxMargin: "10px 2px 2px 2px"
+                ,closeBoxURL: "icons/button_close.png"
+                ,infoBoxClearance: new google.maps.Size(1, 1)
+                ,isHidden: false
+                ,pane: "floatPane"
+                ,enableEventPropagation: false
+};
+ 
+infoboxGlastonbury = new InfoBox(infoboxOptionsGlastonbury);
+
+google.maps.event.addListener(markerGlastonbury, "click", function (e) {
+			infoboxGlastonbury.open(festivalMap, this);
+                        this.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+                        setZoomWhenMarkerClicked();
+                        festivalMap.setCenter(markerGlastonbury.getPosition());
+});
+
+
+//ISLE OF WIGHT-----------
+
+
+var markerPositionIsleOfWight = new google.maps.LatLng(50.708571, -1.285615);
+
+var markerIconIsleOfWight = {
+  url: 'icons/icon_iow.png',
+  size: new google.maps.Size(198, 108),
+  origin: new google.maps.Point(0, 0),
+  anchor: new google.maps.Point(103, 102)
+};
+
+var markerShapeIsleOfWight = {
+      coord: [6,30,180,4,192,70,103,82,105,105,82,85,15,93],
+      type: 'poly'
+};
+
+markerIsleOfWight = new google.maps.Marker({
+	  position: markerPositionIsleOfWight,
+      map: festivalMap,
+      title: 'Isle of Wight Festival',
+	  icon: markerIconIsleOfWight,
+	  shape: markerShapeIsleOfWight,
+	  zIndex:108
+});
+
+
+
+
+var boxTextIsleOfWight = document.createElement("div");
+boxTextIsleOfWight.style.cssText = pop_up_info;
+boxTextIsleOfWight.innerHTML = '<span class="pop_up_box_text"><img src="content/isleofwight.jpg" width="400" height="285" border="0" /></span>';
+
+var infoboxOptionsIsleOfWight = {
+                 content: boxTextIsleOfWight
+                ,disableAutoPan: false
+                ,maxWidth: 0
+                ,pixelOffset: new google.maps.Size(-241, 0)
+                ,zIndex: null
+                ,boxStyle: { 
+                  background: "url('infobox/pop_up_box_top_arrow.png') no-repeat"
+                  ,opacity: 1
+                  ,width: "430px"
+                 }
+                ,closeBoxMargin: "10px 2px 2px 2px"
+                ,closeBoxURL: "icons/button_close.png"
+                ,infoBoxClearance: new google.maps.Size(1, 1)
+                ,isHidden: false
+                ,pane: "floatPane"
+                ,enableEventPropagation: false
+};
+ 
+infoboxIsleOfWight = new InfoBox(infoboxOptionsIsleOfWight);
+
+google.maps.event.addListener(markerIsleOfWight, "click", function (e) {
+			infoboxIsleOfWight.open(festivalMap, this);
+                        this.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+                        setZoomWhenMarkerClicked();
+                        festivalMap.setCenter(markerIsleOfWight.getPosition());
+});
+
+
+
+
+//LEEDS ------------
+
+var markerPositionLeeds = new google.maps.LatLng(53.868083, -1.381359);
+
+var markerIconLeeds = {
+  url: 'icons/icon_leeds.png',
+  size: new google.maps.Size(216, 151),
+  origin: new google.maps.Point(0, 0),
+  anchor: new google.maps.Point(192, 148)
+};
+
+var markerShapeLeeds = {
+      coord: [18,8,208,28,200,113,162,110,190,145,128,109,6,93],
+      type: 'poly'
+};
+
+markerLeeds = new google.maps.Marker({
+	  position: markerPositionLeeds,
+      map: festivalMap,
+      title: 'Leeds Festival',
+	  icon: markerIconLeeds,
+	  shape: markerShapeLeeds,
+	  zIndex:103
+});
+
+
+var boxTextLeeds = document.createElement("div");
+boxTextLeeds.style.cssText = pop_up_info;
+boxTextLeeds.innerHTML = '<span class="pop_up_box_text"><img src="content/leeds.jpg" width="400" height="300" border="0" /></span>';
+
+var infoboxOptionsLeeds = {
+                 content: boxTextLeeds
+                ,disableAutoPan: false
+                ,maxWidth: 0
+                ,pixelOffset: new google.maps.Size(-241, 0)
+                ,zIndex: null
+                ,boxStyle: { 
+                  background: "url('infobox/pop_up_box_top_arrow.png') no-repeat"
+                  ,opacity: 1
+                  ,width: "430px"
+                 }
+                ,closeBoxMargin: "10px 2px 2px 2px"
+                ,closeBoxURL: "icons/button_close.png"
+                ,infoBoxClearance: new google.maps.Size(1, 1)
+                ,isHidden: false
+                ,pane: "floatPane"
+                ,enableEventPropagation: false
+};
+ 
+infoboxLeeds = new InfoBox(infoboxOptionsLeeds);
+
+google.maps.event.addListener(markerLeeds, "click", function (e) {
+			infoboxLeeds.open(festivalMap, this);
+                        this.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+                        setZoomWhenMarkerClicked();
+                        festivalMap.setCenter(markerLeeds.getPosition());
+});
+
+
+
+
+//READING -------------
+
+var markerPositionReading = new google.maps.LatLng(51.465602, -0.987096);
+
+var markerIconReading = {
+  url: 'icons/icon_reading.png',
+  size: new google.maps.Size(196, 114),
+  origin: new google.maps.Point(0, 0),
+  anchor: new google.maps.Point(46, 109)
+};
+
+var markerShapeReading = {
+      coord: [8,54,177,7,189,49,65,88,44,110,47,91,20,98],
+      type: 'poly'
+};
+
+markerReading = new google.maps.Marker({
+	  position: markerPositionReading,
+      map: festivalMap,
+      title: 'Reading Festival',
+	  icon: markerIconReading,
+	  shape: markerShapeReading,
+	  zIndex:106
+});
+
+
+
+var boxTextReading = document.createElement("div");
+boxTextReading.style.cssText = pop_up_info;
+boxTextReading.innerHTML = '<span class="pop_up_box_text"><img src="content/reading.jpg" width="400" height="285" border="0" /></span>';
+
+var infoboxOptionsReading = {
+                 content: boxTextReading
+                ,disableAutoPan: false
+                ,maxWidth: 0
+                ,pixelOffset: new google.maps.Size(-241, 0)
+                ,zIndex: null
+                ,boxStyle: { 
+                  background: "url('infobox/pop_up_box_top_arrow.png') no-repeat"
+                  ,opacity: 1
+                  ,width: "430px"
+                 }
+                ,closeBoxMargin: "10px 2px 2px 2px"
+                ,closeBoxURL: "icons/button_close.png"
+                ,infoBoxClearance: new google.maps.Size(1, 1)
+                ,isHidden: false
+                ,pane: "floatPane"
+                ,enableEventPropagation: false
+};
+ 
+infoboxReading = new InfoBox(infoboxOptionsReading);
+
+google.maps.event.addListener(markerReading, "click", function (e) {
+			infoboxReading.open(festivalMap, this);
+                        this.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+                        setZoomWhenMarkerClicked();
+                        festivalMap.setCenter(markerReading.getPosition());
+});
+
+
+
+
+//LATITUDE -------------
+
+var markerPositionLatitude = new google.maps.LatLng(52.337013, 1.595228);
+
+var markerIconLatitude = {
+  url: 'icons/icon_lat.png',
+  size: new google.maps.Size(192, 128),
+  origin: new google.maps.Point(0, 0),
+  anchor: new google.maps.Point(82, 125)
+};
+
+var markerShapeLatitude = {
+      coord: [8,8,184,10,182,70,111,70,82,122,87,71,9,71],
+      type: 'poly'
+};
+
+markerLatitude = new google.maps.Marker({
+	  position: markerPositionLatitude,
+      map: festivalMap,
+      title: 'Latitude Festival',
+	  icon: markerIconLatitude,
+	  shape: markerShapeLatitude,
+	  zIndex:105
+});
+
+
+var boxTextLatitude = document.createElement("div");
+boxTextLatitude.style.cssText = pop_up_info;
+boxTextLatitude.innerHTML = '<span class="pop_up_box_text"><img src="content/latitude.jpg" width="400" height="285" border="0" /></span>';
+
+var infoboxOptionsLatitude = {
+                 content: boxTextLatitude
+                ,disableAutoPan: false
+                ,maxWidth: 0
+                ,pixelOffset: new google.maps.Size(-241, 0)
+                ,zIndex: null
+                ,boxStyle: { 
+                  background: "url('infobox/pop_up_box_top_arrow.png') no-repeat"
+                  ,opacity: 1
+                  ,width: "430px"
+                 }
+                ,closeBoxMargin: "10px 2px 2px 2px"
+                ,closeBoxURL: "icons/button_close.png"
+                ,infoBoxClearance: new google.maps.Size(1, 1)
+                ,isHidden: false
+                ,pane: "floatPane"
+                ,enableEventPropagation: false
+};
+ 
+infoboxLatitude = new InfoBox(infoboxOptionsLatitude);
+
+google.maps.event.addListener(markerLatitude, "click", function (e) {
+			infoboxLatitude.open(festivalMap, this);
+                        this.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+                        setZoomWhenMarkerClicked();
+                        festivalMap.setCenter(markerLatitude.getPosition());
+});
+
+
+
+//SECRET GARDEN ------------
+
+var markerPositionGarden = new google.maps.LatLng(52.383126, -0.181189);
+
+var markerIconGarden = {
+  url: 'icons/icon_green2.png',
+  size: new google.maps.Size(139, 138),
+  origin: new google.maps.Point(0, 0),
+  anchor: new google.maps.Point(117, 134)
+};
+
+var markerShapeGarden = {
+      coord: [7,16,128,5,133,110,107,113,117,133,82,116,15,120],
+      type: 'poly'
+};
+
+markerGarden = new google.maps.Marker({
+	  position: markerPositionGarden,
+      map: festivalMap,
+      title: 'Seceret Garden Festival',
+	  icon: markerIconGarden,
+	  shape: markerShapeGarden,
+	  zIndex:104
+});
+
+
+var boxTextGarden = document.createElement("div");
+boxTextGarden.style.cssText = pop_up_info;
+boxTextGarden.innerHTML = '<span class="pop_up_box_text"><img src="content/secretgarden.jpg" width="400" height="285" border="0" /></span>';
+
+var infoboxOptionsGarden = {
+                 content: boxTextGarden
+                ,disableAutoPan: false
+                ,maxWidth: 0
+                ,pixelOffset: new google.maps.Size(-241, 0)
+                ,zIndex: null
+                ,boxStyle: { 
+                  background: "url('infobox/pop_up_box_top_arrow.png') no-repeat"
+                  ,opacity: 1
+                  ,width: "430px"
+                 }
+                ,closeBoxMargin: "10px 2px 2px 2px"
+                ,closeBoxURL: "icons/button_close.png"
+                ,infoBoxClearance: new google.maps.Size(1, 1)
+                ,isHidden: false
+                ,pane: "floatPane"
+                ,enableEventPropagation: false
+};
+ 
+infoboxGarden = new InfoBox(infoboxOptionsGarden);
+
+google.maps.event.addListener(markerGarden, "click", function (e) {
+			infoboxGarden.open(festivalMap, this);
+                        this.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+                        setZoomWhenMarkerClicked();
+                        festivalMap.setCenter(markerGarden.getPosition());
+});
+
+//T IN THE PARK ------------
+
+var markerPositionTPark = new google.maps.LatLng(56.208772, -3.474255);
+
+var markerIconTPark = {
+  url: 'icons/icon_tpark.png',
+  size: new google.maps.Size(173, 110),
+  origin: new google.maps.Point(0, 0),
+  anchor: new google.maps.Point(31, 108)
+};
+
+var markerShapeTPark = {
+      coord: [17,6,168,27,157,105,53,91,32,105,26,86,7,83],
+      type: 'poly'
+};
+
+markerTPark = new google.maps.Marker({
+	  position: markerPositionTPark,
+      map: festivalMap,
+      title: 'T-Park Festival',
+	  icon: markerIconTPark,
+	  shape: markerShapeTPark,
+	  zIndex:101
+});
+
+
+var boxTextTPark = document.createElement("div");
+boxTextTPark.style.cssText = pop_up_info;
+boxTextTPark.innerHTML = '<span class="pop_up_box_text"><img src="content/tpark.jpg" width="400" height="285" border="0" /></span>';
+
+var infoboxOptionsTPark = {
+                 content: boxTextTPark
+                ,disableAutoPan: false
+                ,maxWidth: 0
+                ,pixelOffset: new google.maps.Size(-241, 0)
+                ,zIndex: null
+                ,boxStyle: { 
+                  background: "url('infobox/pop_up_box_top_arrow.png') no-repeat"
+                  ,opacity: 1
+                  ,width: "430px"
+                 }
+                ,closeBoxMargin: "10px 2px 2px 2px"
+                ,closeBoxURL: "icons/button_close.png"
+                ,infoBoxClearance: new google.maps.Size(1, 1)
+                ,isHidden: false
+                ,pane: "floatPane"
+                ,enableEventPropagation: false
+};
+ 
+infoboxTPark = new InfoBox(infoboxOptionsTPark);
+
+google.maps.event.addListener(markerTPark, "click", function (e) {
+			infoboxTPark.open(festivalMap, this);
+                        this.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+                        setZoomWhenMarkerClicked();
+                        festivalMap.setCenter(markerTPark.getPosition());
+});
+
+
+//ROCKNESS -------------
+
+var markerPositionRockness = new google.maps.LatLng(57.383732, -4.331617);
+
+var markerIconRockness = {
+  url: 'icons/icon_rockness.png',
+  size: new google.maps.Size(214, 82),
+  origin: new google.maps.Point(0, 0),
+  anchor: new google.maps.Point(182, 77)
+};
+
+var markerShapeRockness = {
+      coord: [10,7,205,7,205,57,183,57,183,76,164,58,8,58],
+      type: 'poly'
+};
+
+markerRockness = new google.maps.Marker({
+	  position: markerPositionRockness,
+      map: festivalMap,
+      title: 'Rockness Festival',
+	  icon: markerIconRockness,
+	  shape: markerShapeRockness,
+	  zIndex:100
+});
+
+
+var boxTextRockness = document.createElement("div");
+boxTextRockness.style.cssText = pop_up_info;
+boxTextRockness.innerHTML = '<span class="pop_up_box_text"><img src="content/rockness.jpg" width="400" height="285" border="0" /></span>';
+
+var infoboxOptionsRockness = {
+                 content: boxTextRockness
+                ,disableAutoPan: false
+                ,maxWidth: 0
+                ,pixelOffset: new google.maps.Size(-241, 0)
+                ,zIndex: null
+                ,boxStyle: { 
+                  background: "url('infobox/pop_up_box_top_arrow.png') no-repeat"
+                  ,opacity: 1
+                  ,width: "430px"
+                 }
+                ,closeBoxMargin: "10px 2px 2px 2px"
+                ,closeBoxURL: "icons/button_close.png"
+                ,infoBoxClearance: new google.maps.Size(1, 1)
+                ,isHidden: false
+                ,pane: "floatPane"
+                ,enableEventPropagation: false
+};
+ 
+infoboxRockness = new InfoBox(infoboxOptionsRockness);
+
+google.maps.event.addListener(markerRockness, "click", function (e) {
+			infoboxRockness.open(festivalMap, this);
+                        this.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+                        setZoomWhenMarkerClicked();
+                        festivalMap.setCenter(markerRockness.getPosition());
+});
+
+
+//GLASGOBURY -----------
+
+var markerPositionGlasgowbury = new google.maps.LatLng(54.822809, -6.842251);
+
+var markerIconGlasgowbury = {
+  url: 'icons/icon_glas_ni.png',
+  size: new google.maps.Size(222, 102),
+  origin: new google.maps.Point(0, 0),
+  anchor: new google.maps.Point(152, 102)
+};
+
+var markerShapeGlasgowbury = {
+      coord: [7,47,206,6,210,55,140,68,147,98,120,75,17,94],
+      type: 'poly'
+};
+
+markerGlasgowbury = new google.maps.Marker({
+	  position: markerPositionGlasgowbury,
+      map: festivalMap,
+      title: 'Glasgowbury Festival',
+	  icon: markerIconGlasgowbury,
+	  shape: markerShapeGlasgowbury,
+	  zIndex:102
+});
+
+var boxTextGlasgowbury = document.createElement("div");
+boxTextGlasgowbury.style.cssText = pop_up_info;
+boxTextGlasgowbury.innerHTML = '<span class="pop_up_box_text"><img src="content/glasgowbury.jpg" width="400" height="285" border="0" /></span>';
+
+var infoboxOptionsGlasgowbury = {
+                 content: boxTextGlasgowbury
+                ,disableAutoPan: false
+                ,maxWidth: 0
+                ,pixelOffset: new google.maps.Size(-241, 0)
+                ,zIndex: null
+                ,boxStyle: { 
+                  background: "url('infobox/pop_up_box_top_arrow.png') no-repeat"
+                  ,opacity: 1
+                  ,width: "430px"
+                 }
+                ,closeBoxMargin: "10px 2px 2px 2px"
+                ,closeBoxURL: "icons/button_close.png"
+                ,infoBoxClearance: new google.maps.Size(1, 1)
+                ,isHidden: false
+                ,pane: "floatPane"
+                ,enableEventPropagation: false
+};
+ 
+infoboxGlasgowbury = new InfoBox(infoboxOptionsGlasgowbury);
+
+google.maps.event.addListener(markerGlasgowbury, "click", function (e) {
+			infoboxGlasgowbury.open(festivalMap, this);
+                        this.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+                        setZoomWhenMarkerClicked();
+                        festivalMap.setCenter(markerGlasgowbury.getPosition());
+});
+
+
+}
+
+
+function setZoomWhenMarkerClicked(){
+var currentZoom = festivalMap.getZoom();
+	if (currentZoom < 7){
+			festivalMap.setZoom(7);
+	}
+}
+
+function resetZindexes (){
+	markerRockness.setZIndex(100);
+	markerTPark.setZIndex(101);
+	markerGlasgowbury.setZIndex(102);
+	markerLeeds.setZIndex(103);	
+	markerGarden.setZIndex(104);
+	markerLatitude.setZIndex(105);
+	markerReading.setZIndex(106);
+	markerGlastonbury.setZIndex(107);
+	markerIsleOfWight.setZIndex(108);
+}
+
+
+function createControlPanel (controlPanelDiv){
+   controlPanelDiv.style.padding = '0px';  
+   controlUI = document.createElement('div');
+   controlUI.style.border='0px solid white';
+   controlUI.style.margin='10px';
+   controlUI.style.paddingTop='11px';
+   controlUI.style.paddingBottom='5px';
+   controlUI.style.paddingLeft='0px';
+   controlUI.style.paddingRight='0px';
+   controlUI.style.width='245px';
+   controlUI.style.height='419px';
+   controlPanelDiv.appendChild(controlUI);
+
+   titleBar = document.createElement('div');
+   titleBar.style.backgroundColor = '#89CBED';
+   titleBar.style.height='255px';
+   titleBar.style.width='245px';
+   titleBar.style.marginTop='0px';
+   titleBar.style.marginBottom='0px';
+   titleBar.style.marginLeft='0px';
+   titleBar.style.marginRight='0px';
+   titleBar.style.paddingTop='6px';
+   titleBar.style.paddingBottom='2px';
+   titleBar.style.paddingLeft='0px';
+   titleBar.style.paddingRight='0px';
+   titleBar.style.borderTopLeftRadius='5px';
+   titleBar.style.borderTopRightRadius='5px';
+   titleBar.style.borderBottomLeftRadius='0px';
+   titleBar.style.borderBottomLeftRadius='0px';
+   titleBar.style.cssFloat='left';
+   titleBar.innerHTML = '<div align="center"><img src="icons/map_title.png" width="230" height="252" border="0"/></div>';
+   controlUI.appendChild(titleBar);
+
+   yellowStripe = document.createElement('div');
+   yellowStripe.style.backgroundColor = '#FFFF00';
+   yellowStripe.style.height='2px';
+   yellowStripe.style.width='245px';
+   yellowStripe.style.marginTop='3px';
+   yellowStripe.style.marginBottom='3px';
+   yellowStripe.style.marginLeft='0px';
+   yellowStripe.style.marginRight='0px';
+   yellowStripe.style.paddingTop='0px';
+   yellowStripe.style.paddingBottom='0px';
+   yellowStripe.style.paddingLeft='0px';
+   yellowStripe.style.paddingRight='0px';
+   yellowStripe.style.cssFloat='left';
+   yellowStripe.style.fontFamily='Georgia, serif';
+   yellowStripe.style.fontSize='14px';
+   controlUI.appendChild(yellowStripe);
+
+   smallEvents = document.createElement('div');
+   smallEvents.style.height='108px';
+   smallEvents.style.width='129px';
+   smallEvents.style.marginTop='0px';
+   smallEvents.style.marginBottom='0px';
+   smallEvents.style.marginLeft='0px';
+   smallEvents.style.marginRight='0px';
+   smallEvents.style.paddingTop='0px';
+   smallEvents.style.paddingBottom='2px';
+   smallEvents.style.paddingLeft='0px';
+   smallEvents.style.paddingRight='0px';
+   smallEvents.style.cssFloat='left';
+   smallEvents.innerHTML = '<div align="center" onClick="handelRequests(\'small_events\')" OnMouseOver="this.style.cursor=\'pointer\';" OnMouseOut="this.style.cursor=\'default\';"><img src="icons/button_small_event.png" width="128" height="107" border="0"/></div>';
+   controlUI.appendChild(smallEvents);
+
+   brolly = document.createElement('div');
+   brolly.style.height='149px';
+   brolly.style.width='94px';
+   brolly.style.marginTop='0px';
+   brolly.style.marginBottom='0px';
+   brolly.style.marginLeft='0px';
+   brolly.style.marginRight='0px';
+   brolly.style.paddingTop='0px';
+   brolly.style.paddingBottom='2px';
+   brolly.style.paddingLeft='0px';
+   brolly.style.paddingRight='0px';
+   brolly.style.cssFloat='left';
+   brolly.innerHTML = '<div align="center" onClick="handelRequests(\'rainfall\')" OnMouseOver="this.style.cursor=\'pointer\';" OnMouseOut="this.style.cursor=\'default\';"><img src="icons/button_brolly.png" width="93" height="148" border="0"/></div>';
+   controlUI.appendChild(brolly);
+  
+}
+
+
+function createResetButton (resetButtonDiv){
+  resetButtonDiv.style.padding = '0px';  
+  controlUI2 = document.createElement('div');
+  controlUI2.style.backgroundColor = '#ffffff';
+  controlUI2.style.borderRadius='5px';
+  controlUI2.style.margin='10px';
+  controlUI2.style.paddingTop='2px';
+  controlUI2.style.paddingBottom='2px';
+  controlUI2.style.paddingLeft='2px';
+  controlUI2.style.paddingRight='5px';
+  controlUI2.style.textAlign='center';
+  controlUI2.style.width='148px';
+  controlUI2.style.height='31px';
+  controlUI2.innerHTML = '<div onClick="handelRequests(\'reset\')" OnMouseOver="this.style.cursor=\'pointer\';" OnMouseOut="this.style.cursor=\'default\';" ><img src="icons/button_reset.png" width="148" height="31" border="0"/></div>';
+  resetButtonDiv.appendChild(controlUI2);
+}
+
+
+function handelRequests (buttonPressed) {
+if (buttonPressed === "reset"){
+        festivalMap.setZoom(festivalMapZoom);
+	festivalMap.setCenter(festivalMapCenter);
+	resetZindexes();
+        closeAllInfoboxes();  
+}
+else if (buttonPressed === "small_events"){
+	alert("This button will do something useful in a later tutorial!");
+}
+else if (buttonPressed === "rainfall"){
+	alert("This button will do something useful in a later tutorial!");
+}
+}
+
+
+function closeAllInfoboxes(){
+	infoboxGlastonbury.close();
+        infoboxIsleOfWight.close();
+        infoboxGarden.close();
+        infoboxReading.close();
+        infoboxLatitude.close();
+        infoboxLeeds.close();
+        infoboxGlasgowbury.close();
+        infoboxTPark.close();
+        infoboxRockness.close();
+	
+}
+
+</script>
+
+</head>
+<body>  
+     
+    <div id="festival-map"></div>   
+</body>
+</html>
+
